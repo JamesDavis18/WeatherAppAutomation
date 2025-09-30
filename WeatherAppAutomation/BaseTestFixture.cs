@@ -7,17 +7,25 @@ using FlaUI.Core.Conditions;
 
 namespace WeatherAppAutomation
 {
-    [TestFixture(AutomationType.UIA3)]
-    public class BaseTestFixture : SetupFixture
+    //[TestFixture(AutomationType.UIA3)]
+    public class BaseTestFixture
     {
         public Window MainWindow { get; private set; }
-        public Application WeatherApp => base.WeatherApp;
+        protected Application _weatherApp => SetupFixture.WeatherApp;
+        public UIA3Automation _automation => SetupFixture.UIAutomation;
 
         [SetUp]
         public virtual void Setup()
         {
-            MainWindow = WeatherApp.GetMainWindow(automation);
-
+            var mainWindow = _weatherApp.GetMainWindow(_automation);
+            if (mainWindow == null)
+            {
+                Assert.Fail("Main window could not be found.");
+            }
+            MainWindow = mainWindow!;
+            Assert.IsNotNull(MainWindow);
+            mainWindow.Patterns.Window.Pattern.SetWindowVisualState(WindowVisualState.Maximized);
+            //MainWindow.WaitUntilClickable(TimeSpan.FromSeconds(10));
         }
 
 
@@ -25,7 +33,9 @@ namespace WeatherAppAutomation
         public virtual void TearDown()
         {
 
+            MainWindow.Capture();
             MainWindow.Close();
+            TestContext.WriteLine($"Test teardown completed from {nameof(BaseTestFixture)}");
 
         }
 

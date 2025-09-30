@@ -2,6 +2,7 @@
 using FlaUI.Core.Conditions;
 using FlaUI.Core.Definitions;
 using FlaUI.UIA3;
+using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 
 namespace WeatherAppAutomation;
 
@@ -11,14 +12,14 @@ public class MenuTests : BaseTestFixture
 {
     public AutomationElement _mainWindow => base.MainWindow;
 
-    public AutomationElement SideNavBar =>
+    public AutomationElement? SideNavBar =>
         _mainWindow.FindFirstDescendant(cf =>
             cf.ByName("Account")
                 .And(cf.ByControlType(ControlType.Window))
                 .And(cf.ByClassName("ApplicationFrameWindow"))
         );
 
-    public AutomationElement AccountWindow =>
+    public AutomationElement? AccountWindow =>
         _mainWindow.FindFirstDescendant(cf =>
             cf.ByAutomationId("AccountSettingsPane")
                 .And(cf.ByControlType(ControlType.Window))
@@ -30,7 +31,7 @@ public class MenuTests : BaseTestFixture
         base.Setup();
     }
 
-    [Test]
+    [Test, Order(1)]
     public void TestMenuOptions()
     {
         var cf = new ConditionFactory(new UIA3PropertyLibrary());
@@ -72,7 +73,7 @@ public class MenuTests : BaseTestFixture
         Assert.Pass();
     }
 
-    [Test]
+    [Test, Order(2)]
     public void TestHomeBadges()
     {
         var cf = new ConditionFactory(new UIA3PropertyLibrary());
@@ -83,7 +84,7 @@ public class MenuTests : BaseTestFixture
         var signOutBtn = SideNavBar.FindFirstDescendant(cf.ByAutomationId("SignOutButton").And(cf.ByControlType(ControlType.Button)));
         signOutBtn?.Focus();
         var signOutBtnText = signOutBtn?.FindFirstDescendant(cf.ByAutomationId("SignOutText").And(cf.ByClassName("TextBlock")));
-        Assert.That(signOutBtnText.IsOffscreen, Is.EqualTo(true), "Sign out button text is visible, side pane should not be expanded");
+        Assert.That(signOutBtnText?.IsOffscreen, Is.EqualTo(true), "Sign out button text is visible, side pane should not be expanded");
         signOutBtn?.Click();
 
         Assert.Pass();
@@ -93,5 +94,6 @@ public class MenuTests : BaseTestFixture
     public override void TearDown()
     {
         base.TearDown();
+        TestContext.WriteLine($"Teardown method run from derived class {nameof(MenuTests)}");
     }
 }

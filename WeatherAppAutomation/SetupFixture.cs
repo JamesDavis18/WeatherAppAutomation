@@ -1,49 +1,84 @@
 ﻿using System;
+using System.Threading.Tasks;
 using NUnit.Framework;
 using FlaUI.Core;
 using FlaUI.UIA3;
 using System.Diagnostics;
 using System.Security.Cryptography.X509Certificates;
 using FlaUI.Core.AutomationElements;
+using FlaUI.Core.Tools;
+using System.Runtime.Versioning;
+//using OperatingSystem = FlaUI.Core.WindowsAPI.OperatingSystem;
 
 namespace WeatherAppAutomation
 {
 	[SetUpFixture]
-	public abstract class SetupFixture
+	public class SetupFixture
 	{
-        public Application WeatherApp { get; private set; }
-        public UIA3Automation automation { get; private set; }
-		public Window MainWindow { get; private set; }
+        public static Application WeatherApp { get; private set; }
+        public static UIA3Automation UIAutomation { get; private set; }
 
         [OneTimeSetUp]
         //Code to run before any tests in the assembly
-        public virtual void OneTimeSetup()
+        public virtual void OneTimeSetUp()
 		{
-			
+			UIAutomation = new UIA3Automation();
 			//bool isStoreApp = true;
-			ProcessStartInfo processStartInfo = new ProcessStartInfo
+			//ProcessStartInfo processStartInfo = new ProcessStartInfo
+			//{
+			//	FileName = @"bingweather://",
+			//	UseShellExecute = true
+			//};
+			try
 			{
-				FileName = @"weather://",
-				UseShellExecute = true
-			};
+                WeatherApp = Application.LaunchStoreApp("Microsoft.BingWeather_8wekyb3d8bbwe!App");
+            }
+			catch (Exception ex)
+			{
+				TestContext.WriteLine($"LaunchStoreApp failed: {ex.Message}");
+				WeatherApp = null;
+			}
+			//if (WeatherApp == null)
+			//{
+			//	TestContext.WriteLine($"LaunchStoreApp failed, attempting to launch via ProcessStartInfo");
+			//	WeatherApp = Application.Launch(processStartInfo);
+			//}
+			WeatherApp.WaitWhileMainHandleIsMissing();
 
-			WeatherApp = Application.Launch(processStartInfo);
-			Assert.That(WeatherApp.Equals(null), Is.False, "Failed to launch Weather app.");
+			var retryResult = Retry.WhileNull(
+				() => WeatherApp.GetMainWindow(UIAutomation), 
+				timeout: TimeSpan.FromSeconds(10),
+				interval: TimeSpan.FromMilliseconds(500));
+
+			Assert.That(retryResult.Success, Is.True, "Failed to find main window of Weather app.");
+            //Thread.Sleep(2000);
             //WeatherApp.IsStoreApp = isStoreApp;
-            automation = new UIA3Automation();
-			TestContext.WriteLine("Global setup for tests.");
+
+            if (!retryResult.Success || retryResult.Result == null)
+			{
+				Assert.Fail("Main window could not be found.");
+            }
+            TestContext.WriteLine("Global setup for tests.");
         }
 
 		[OneTimeTearDown]
-		public virtual void OneTimeTeardown()
+		public virtual void OneTimeTearDown()
 		{
-			automation.Dispose();
-			if (!WeatherApp.HasExited)
+			try
 			{
-				WeatherApp.Close();
+				if (WeatherApp != null && !WeatherApp.HasExited)
+				{
+					WeatherApp.Close();
+                }
+                WeatherApp?.Dispose();
+				UIAutomation?.Dispose();
             }
+			catch (Exception ex)
+			{
+				TestContext.WriteLine($"Teardown failed: {ex.Message}");
+			}
 			// Code to run after all tests in the assembly
-			TestContext.WriteLine("Global teardown for tests.");
+			TestContext.WriteLine("Ran OneTimeTearDown and closed test instance");
 		}
     }
 }
