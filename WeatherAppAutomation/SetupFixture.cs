@@ -108,7 +108,7 @@ namespace WeatherAppAutomation
 			}
             TestContext.WriteLine($"LaunchedWeaherAp with ProcessID:{WeatherApp.ProcessId}");
             //WeatherApp?.WaitWhileMainHandleIsMissing(TimeSpan.FromSeconds(10));
-            //WeatherApp?.WaitWhileBusy();
+            WeatherApp?.WaitWhileBusy();
 
             //var retryResult = Retry.WhileNull(
             //	() => WeatherApp.GetAllTopLevelWindows(UIAutomation),
