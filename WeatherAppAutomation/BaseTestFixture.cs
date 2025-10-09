@@ -13,8 +13,8 @@ namespace WeatherAppAutomation
     public class BaseTestFixture
     {
         public Window MainWindow { get; private set; }
-        protected Application _weatherApp => SetupFixture.WeatherApp;
-        public UIA3Automation _automation => SetupFixture.UIAutomation;
+        protected static Application _weatherApp => SetupFixture.WeatherApp;
+        protected static UIA3Automation _automation => SetupFixture.UIAutomation;
 
         public Window? GetMainWindowByCriteria(string expectedName, string expectedClassName)
         {
